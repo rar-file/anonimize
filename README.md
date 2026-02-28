@@ -14,6 +14,8 @@
 
 Anonimize makes it easy to protect sensitive information (PII) in your data while preserving data relationships and utility. Perfect for creating safe development datasets, sharing test data, or complying with privacy regulations like GDPR and CCPA.
 
+✅ Now with 160+ tests and CI/CD ready!
+
 ---
 
 ## 🚀 Quick Start
