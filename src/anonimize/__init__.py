@@ -34,18 +34,18 @@ Modules:
 """
 
 # Simple API - Import these for quick usage
-from anonimize.simple import anonymize, anonymize_data, detect_pii, preview
-from anonimize.core import Anonymizer
 from anonimize.__version__ import __version__, __version_info__
+from anonimize.core import Anonymizer
+from anonimize.simple import anonymize, anonymize_data, detect_pii, preview
 
 # Export connectors if available
 try:
     from anonimize.connectors import (
-        PostgreSQLConnector,
-        MySQLConnector,
-        SQLiteConnector,
-        MongoDBConnector,
         ConnectionConfig,
+        MongoDBConnector,
+        MySQLConnector,
+        PostgreSQLConnector,
+        SQLiteConnector,
         create_connector,
     )
 except ImportError:
@@ -59,10 +59,10 @@ except ImportError:
 # Export formats if available
 try:
     from anonimize.formats import (
-        ParquetHandler,
-        ExcelHandler,
         AvroHandler,
+        ExcelHandler,
         FormatConfig,
+        ParquetHandler,
         get_handler,
     )
 except ImportError:
@@ -75,8 +75,8 @@ except ImportError:
 # Export streaming if available
 try:
     from anonimize.streaming import (
-        StreamingProcessor,
         StreamConfig,
+        StreamingProcessor,
         process_large_file,
     )
 except ImportError:

@@ -6,7 +6,7 @@ that don't fit in memory.
 Example:
     >>> from anonimize.streaming import StreamingProcessor, StreamConfig
     >>> from anonimize import Anonymizer
-    >>> 
+    >>>
     >>> config = StreamConfig(
     ...     batch_size=10000,
     ...     checkpoint_interval=10,
@@ -21,9 +21,9 @@ Example:
 """
 
 from anonimize.streaming.processor import (
-    StreamConfig,
-    ProcessingStats,
     Checkpoint,
+    ProcessingStats,
+    StreamConfig,
     StreamingProcessor,
     process_large_file,
 )

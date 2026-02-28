@@ -12,15 +12,15 @@ Supported Formats:
 
 Example:
     >>> from anonimize.formats import get_handler, FormatConfig
-    >>> 
+    >>>
     >>> # Auto-detect format from extension
     >>> handler = get_handler("data.parquet")
-    >>> 
+    >>>
     >>> # Stream read large file
     >>> for batch in handler.read_streaming("large.parquet", batch_size=5000):
     ...     anonymized_batch = anonymizer.anonymize(batch)
     ...     # Process batch...
-    >>> 
+    >>>
     >>> # Stream write
     >>> config = FormatConfig(compression="zstd", batch_size=10000)
     >>> handler = get_handler("output.parquet", config)
@@ -33,13 +33,13 @@ from typing import Optional
 
 from anonimize.formats.base import (
     BaseFormatHandler,
-    FormatConfig,
     FileStats,
-    StreamingWriter,
+    FormatConfig,
     FormatRegistry,
-    register_handler,
+    StreamingWriter,
     get_handler,
     is_supported,
+    register_handler,
 )
 
 # Import format handlers with availability checks
@@ -60,22 +60,21 @@ except ImportError:
 
 
 def create_handler(
-    format_name: str,
-    config: Optional[FormatConfig] = None
+    format_name: str, config: Optional[FormatConfig] = None
 ) -> BaseFormatHandler:
     """Create a file format handler by name.
-    
+
     Args:
         format_name: Format name ('parquet', 'excel', 'avro', etc.).
         config: Optional format configuration.
-    
+
     Returns:
         Configured handler instance.
-    
+
     Raises:
         ValueError: If format is not supported.
         ImportError: If required dependencies are not installed.
-    
+
     Example:
         >>> handler = create_handler("parquet")
         >>> data = handler.read("data.parquet")
@@ -88,20 +87,18 @@ def create_handler(
         "xls": ExcelHandler,
         "avro": AvroHandler,
     }
-    
+
     handler_class = handlers.get(format_name.lower())
-    
+
     if handler_class is None:
         raise ValueError(
             f"Unsupported format: {format_name}. "
             f"Supported formats: {list(handlers.keys())}"
         )
-    
+
     if handler_class is None:  # Import failed
-        raise ImportError(
-            f"Required dependencies for {format_name} are not installed."
-        )
-    
+        raise ImportError(f"Required dependencies for {format_name} are not installed.")
+
     return handler_class(config)
 
 

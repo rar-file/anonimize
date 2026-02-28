@@ -3,17 +3,17 @@
 This module provides user-friendly error messages with actionable suggestions.
 """
 
-from typing import Optional, List
+from typing import List, Optional
 
 
 class AnonimizeError(Exception):
     """Base exception for anonimize errors."""
-    
+
     def __init__(self, message: str, suggestion: Optional[str] = None):
         super().__init__(message)
         self.message = message
         self.suggestion = suggestion
-    
+
     def __str__(self) -> str:
         if self.suggestion:
             return f"{self.message}\n\n💡 Hint: {self.suggestion}"
@@ -22,7 +22,7 @@ class AnonimizeError(Exception):
 
 class FileNotFoundError(AnonimizeError):
     """Raised when a file is not found."""
-    
+
     def __init__(self, filepath: str):
         suggestion = (
             f"Check that the file exists at: {filepath}\n"
@@ -30,17 +30,14 @@ class FileNotFoundError(AnonimizeError):
             "  - Check file permissions\n"
             "  - For relative paths, ensure you're in the right directory"
         )
-        super().__init__(
-            f"File not found: {filepath}",
-            suggestion
-        )
+        super().__init__(f"File not found: {filepath}", suggestion)
 
 
 class UnsupportedFileTypeError(AnonimizeError):
     """Raised when an unsupported file type is provided."""
-    
+
     SUPPORTED_TYPES = [".csv", ".json", ".jsonl"]
-    
+
     def __init__(self, filepath: str):
         ext = filepath.split(".")[-1] if "." in filepath else "none"
         suggestion = (
@@ -49,15 +46,12 @@ class UnsupportedFileTypeError(AnonimizeError):
             "  - For databases, use the connector API directly\n"
             "  - For other formats, see the documentation for extensibility options"
         )
-        super().__init__(
-            f"Unsupported file type: .{ext}",
-            suggestion
-        )
+        super().__init__(f"Unsupported file type: .{ext}", suggestion)
 
 
 class NoPiiDetectedError(AnonimizeError):
     """Raised when no PII is detected in the data."""
-    
+
     def __init__(self):
         suggestion = (
             "This could mean:\n"
@@ -68,17 +62,14 @@ class NoPiiDetectedError(AnonimizeError):
             "  config = {'column_name': {'strategy': 'replace', 'type': 'name'}}\n"
             "  anonymize_data(data, columns=['column_name'])"
         )
-        super().__init__(
-            "No PII detected in the data",
-            suggestion
-        )
+        super().__init__("No PII detected in the data", suggestion)
 
 
 class InvalidStrategyError(AnonimizeError):
     """Raised when an invalid strategy is specified."""
-    
+
     VALID_STRATEGIES = ["replace", "mask", "hash", "remove"]
-    
+
     def __init__(self, strategy: str):
         suggestion = (
             f"Valid strategies: {', '.join(self.VALID_STRATEGIES)}\n"
@@ -87,25 +78,24 @@ class InvalidStrategyError(AnonimizeError):
             "  - 'hash': One-way transformation (good for analytics)\n"
             "  - 'remove': Delete the data entirely (maximum privacy)"
         )
-        super().__init__(
-            f"Invalid strategy: '{strategy}'",
-            suggestion
-        )
+        super().__init__(f"Invalid strategy: '{strategy}'", suggestion)
 
 
 class ConfigurationError(AnonimizeError):
     """Raised when configuration is invalid."""
-    
+
     def __init__(self, message: str, errors: Optional[List[str]] = None):
         suggestion = None
         if errors:
-            suggestion = "Configuration errors:\n" + "\n".join(f"  - {e}" for e in errors)
+            suggestion = "Configuration errors:\n" + "\n".join(
+                f"  - {e}" for e in errors
+            )
         super().__init__(message, suggestion)
 
 
 class PhoneyNotInstalledError(AnonimizeError):
     """Raised when Phoney is not installed but replace strategy is used."""
-    
+
     def __init__(self):
         suggestion = (
             "Install Phoney with:\n"
@@ -115,13 +105,13 @@ class PhoneyNotInstalledError(AnonimizeError):
         )
         super().__init__(
             "Phoney is required for the 'replace' strategy but is not installed",
-            suggestion
+            suggestion,
         )
 
 
 class PermissionError(AnonimizeError):
     """Raised when there are permission issues with files."""
-    
+
     def __init__(self, filepath: str, operation: str = "access"):
         suggestion = (
             f"Check permissions for: {filepath}\n"
@@ -131,39 +121,38 @@ class PermissionError(AnonimizeError):
             "  - Try running with appropriate permissions"
         )
         super().__init__(
-            f"Permission denied: cannot {operation} {filepath}",
-            suggestion
+            f"Permission denied: cannot {operation} {filepath}", suggestion
         )
 
 
 def format_error(e: Exception) -> str:
     """Format an exception into a user-friendly message.
-    
+
     Args:
         e: The exception to format.
-    
+
     Returns:
         A user-friendly error message with suggestions.
     """
     if isinstance(e, AnonimizeError):
         return str(e)
-    
+
     # Handle common Python exceptions with suggestions
     if isinstance(e, FileNotFoundError):
         return str(FileNotFoundError(str(e)))
-    
+
     if isinstance(e, PermissionError):
         return str(PermissionError(str(e)))
-    
+
     if isinstance(e, ValueError):
         return f"Invalid value: {e}\n\n💡 Hint: Check your input parameters match the expected format."
-    
+
     if isinstance(e, TypeError):
         return f"Type error: {e}\n\n💡 Hint: Check that you're passing the right types (e.g., dict, list, str)."
-    
+
     if isinstance(e, KeyError):
         return f"Missing key: {e}\n\n💡 Hint: Check that your data contains all expected columns/fields."
-    
+
     # Generic error for unexpected exceptions
     return (
         f"Unexpected error: {type(e).__name__}: {e}\n\n"
