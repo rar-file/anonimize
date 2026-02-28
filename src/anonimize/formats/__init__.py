@@ -29,6 +29,8 @@ Example:
     ...         writer.write_batch(batch)
 """
 
+from typing import Optional
+
 from anonimize.formats.base import (
     BaseFormatHandler,
     FormatConfig,

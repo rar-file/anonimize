@@ -29,7 +29,7 @@ pip install "anonimize[all]"
 ### Development Installation
 
 ```bash
-git clone https://github.com/example/anonimize.git
+git clone https://github.com/rar-file/anonimize.git
 cd anonimize
 pip install -e ".[dev,all]"
 ```

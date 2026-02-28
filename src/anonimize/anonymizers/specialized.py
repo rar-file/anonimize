@@ -151,7 +151,7 @@ class BaseSpecializedAnonymizer(ABC):
     
     def _do_replace(self, value: str, preserve_domain: bool = False, **kwargs) -> str:
         """Replace with fake value."""
-        return self._generate_fake(value, preserve_domain)
+        return self._generate_fake(value, preserve_domain=preserve_domain)
     
     def _do_hash(
         self,
@@ -164,7 +164,7 @@ class BaseSpecializedAnonymizer(ABC):
         hasher = hashlib.new(algorithm)
         salted = f"{salt}:{value}" if salt else value
         hasher.update(salted.encode("utf-8"))
-        return hasher.hexdigest()[:len(value)] if len(value) < 64 else hasher.hexdigest()
+        return hasher.hexdigest()
     
     def _do_mask(
         self,
@@ -260,6 +260,9 @@ class EmailAnonymizer(BaseSpecializedAnonymizer):
         r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
     )
     
+    # Regex to detect consecutive dots which are invalid
+    CONSECUTIVE_DOTS_REGEX = re.compile(r'\.\.+')
+    
     # Common disposable email domains
     DISPOSABLE_DOMAINS = {
         'tempmail.com', 'throwaway.com', 'mailinator.com',
@@ -268,7 +271,18 @@ class EmailAnonymizer(BaseSpecializedAnonymizer):
     
     def validate(self, value: str) -> bool:
         """Validate email format."""
-        return bool(self.EMAIL_REGEX.match(value.strip()))
+        if not value or not isinstance(value, str):
+            return False
+        stripped = value.strip()
+        # Check basic regex and also reject consecutive dots
+        if not bool(self.EMAIL_REGEX.match(stripped)):
+            return False
+        # Reject emails with consecutive dots in local part
+        if '@' in stripped:
+            local = stripped.split('@')[0]
+            if self.CONSECUTIVE_DOTS_REGEX.search(local):
+                return False
+        return True
     
     def _generate_fake(self, original: str, preserve_domain: bool = False) -> str:
         """Generate fake email."""
@@ -330,6 +344,15 @@ class EmailAnonymizer(BaseSpecializedAnonymizer):
                 return f"{local}@{domain}"
         
         return self._generate_fake(value, preserve_domain)
+    
+    def _do_mask(self, value: str, mask_char: str = "*", preserve_domain: bool = True, **kwargs) -> str:
+        """Mask email, preserving the domain part."""
+        if '@' not in value:
+            return mask_char * len(value)
+        
+        local, domain = value.rsplit('@', 1)
+        masked_local = mask_char * len(local)
+        return f"{masked_local}@{domain}"
     
     def is_disposable(self, email: str) -> bool:
         """Check if email uses a disposable domain.
@@ -454,7 +477,9 @@ class PhoneAnonymizer(BaseSpecializedAnonymizer):
         """Replace phone with fake."""
         fake = self._generate_fake(value, preserve_country)
         
-        if preserve_format:
+        if preserve_format and not preserve_country:
+            # Only apply format preservation if not preserving country
+            # (country preservation already includes formatting)
             return self._apply_format(value, fake)
         return fake
     

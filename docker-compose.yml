@@ -1,0 +1,141 @@
+# Docker Compose configuration for Anonimize
+# 
+# Usage:
+#   docker-compose up anonimize          # Run with default --help
+#   docker-compose run --rm anonimize --version
+#   docker-compose run --rm anonimize /data/customers.csv --output /data/safe.csv
+#
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # ---------------------------------------------------------------------------
+  # Main Anonimize Service
+  # ---------------------------------------------------------------------------
+  anonimize:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: anonimize:latest
+    container_name: anonimize
+    volumes:
+      # Mount local data directory to container
+      - ./data:/data:rw
+      # Optional: Mount config files
+      - ./config:/config:ro
+    environment:
+      # Default locale for fake data generation
+      - ANONIMIZE_LOCALE=en_US
+      # Default seed for reproducibility
+      - ANONIMIZE_SEED=42
+      # Set to 1 for debug logging
+      - ANONIMIZE_DEBUG=0
+    # Default command (overridden at runtime)
+    command: ["--help"]
+
+  # ---------------------------------------------------------------------------
+  # Example: Anonimize with PostgreSQL
+  # ---------------------------------------------------------------------------
+  # Uncomment and run: docker-compose up postgres anonimize-pg-demo
+  #
+  # anonimize-pg-demo:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   image: anonimize:latest
+  #   depends_on:
+  #     - postgres
+  #   volumes:
+  #     - ./data:/data:rw
+  #   environment:
+  #     - DATABASE_URL=postgresql://test:test@postgres:5432/testdb
+  #     - ANONIMIZE_LOCALE=en_US
+  #   command: ["/data/customers.csv", "--output", "/data/safe.csv"]
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL for testing/demo
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: anonimize-postgres
+    environment:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: testdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Optional: Initialize with test data
+      - ./examples/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test -d testdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------------------------------------------------------
+  # MongoDB for testing/demo
+  # ---------------------------------------------------------------------------
+  mongodb:
+    image: mongo:7-jammy
+    container_name: anonimize-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+      MONGO_INITDB_DATABASE: testdb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+  # ---------------------------------------------------------------------------
+  # MySQL for testing/demo
+  # ---------------------------------------------------------------------------
+  mysql:
+    image: mysql:8.0
+    container_name: anonimize-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: testdb
+      MYSQL_USER: test
+      MYSQL_PASSWORD: test
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
+
+  # ---------------------------------------------------------------------------
+  # Development Environment
+  # ---------------------------------------------------------------------------
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    image: anonimize:dev
+    container_name: anonimize-dev
+    volumes:
+      - .:/workspace
+      - /workspace/.venv
+      - /workspace/__pycache__
+      - ./data:/data:rw
+    working_dir: /workspace
+    environment:
+      - PYTHONPATH=/workspace/src
+      - ANONIMIZE_DEBUG=1
+    command: ["bash"]
+    stdin_open: true
+    tty: true
+
+# =============================================================================
+# Named Volumes
+# =============================================================================
+volumes:
+  postgres_data:
+    driver: local
+  mongodb_data:
+    driver: local
+  mysql_data:
+    driver: local

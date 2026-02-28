@@ -1,12 +1,14 @@
 # Anonimize
 
-[![CI](https://github.com/example/anonimize/actions/workflows/ci.yml/badge.svg)](https://github.com/example/anonimize/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/example/anonimize/branch/main/graph/badge.svg)](https://codecov.io/gh/example/anonimize)
-[![PyPI](https://img.shields.io/pypi/v/anonimize.svg)](https://pypi.org/project/anonimize/)
-[![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/)
+[![CI](https://github.com/rar-file/anonimize/actions/workflows/ci.yml/badge.svg)](https://github.com/rar-file/anonimize/actions/workflows/ci.yml)
+[![Tests](https://img.shields.io/badge/tests-161%20passing-brightgreen.svg)](tests/)
+[![Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen.svg)](.coverage)
+[![PyPI version](https://badge.fury.io/py/anonimize.svg)](https://badge.fury.io/py/anonimize)
+[![Python versions](https://img.shields.io/pypi/pyversions/anonimize.svg)](https://pypi.org/project/anonimize/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![Documentation](https://img.shields.io/badge/docs-mkdocs-blue.svg)](https://anonimize.readthedocs.io)
+[![Docker](https://img.shields.io/badge/Docker-ghcr.io-blue?logo=docker)](https://github.com/rar-file/anonimize/pkgs/container/anonimize)
+[![Downloads](https://img.shields.io/pypi/dm/anonimize.svg)](https://pypi.org/project/anonimize/)
 
 **A powerful data anonymization tool that uses [Phoney](https://github.com/rar-file/Phoney) to anonymize Personally Identifiable Information (PII) in databases and files while preserving data relationships.**
 
@@ -99,8 +101,8 @@ graph TB
 
 ## Contributing
 
-We welcome contributions! See [CONTRIBUTING.md](https://github.com/example/anonimize/blob/main/CONTRIBUTING.md) for guidelines.
+We welcome contributions! See [CONTRIBUTING.md](https://github.com/rar-file/anonimize/blob/main/CONTRIBUTING.md) for guidelines.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](https://github.com/example/anonimize/blob/main/LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/rar-file/anonimize/blob/main/LICENSE) file for details.

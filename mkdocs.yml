@@ -1,7 +1,7 @@
 site_name: Anonimize Documentation
 site_description: A powerful data anonymization tool for PII
 site_url: https://anonimize.readthedocs.io
-repo_url: https://github.com/example/anonimize
+repo_url: https://github.com/rar-file/anonimize
 repo_name: anonimize
 theme:
   name: material
@@ -88,7 +88,7 @@ markdown_extensions:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/example/anonimize
+      link: https://github.com/rar-file/anonimize
     - icon: fontawesome/brands/python
       link: https://pypi.org/project/anonimize/
   version:

@@ -38,7 +38,7 @@ This project and everyone participating in it is governed by our [Code of Conduc
 
 3. **Set up the upstream remote**:
    ```bash
-   git remote add upstream https://github.com/original/anonimize.git
+   git remote add upstream https://github.com/rar-file/anonimize.git
    ```
 
 4. **Create a virtual environment**:
@@ -330,7 +330,7 @@ docs: update installation instructions
 
 - **GitHub Discussions**: For questions and ideas
 - **GitHub Issues**: For bug reports and feature requests
-- **Discord**: [Join our community](https://discord.gg/example)
+- **Discord**: [Join our community](https://discord.gg/rarcodes)
 
 ## Recognition
 

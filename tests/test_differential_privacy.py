@@ -46,12 +46,12 @@ class TestPrivacyParameters:
 
     def test_invalid_delta_negative(self):
         """Test delta cannot be negative."""
-        with pytest.raises(ValueError, match="delta must be in \\[0, 1\"):
+        with pytest.raises(ValueError, match=r"delta must be in \[0, 1\)"):
             PrivacyParameters(epsilon=1.0, delta=-0.1)
 
     def test_invalid_delta_one(self):
         """Test delta must be less than 1."""
-        with pytest.raises(ValueError, match="delta must be in \\[0, 1\"):
+        with pytest.raises(ValueError, match=r"delta must be in \[0, 1\)"):
             PrivacyParameters(epsilon=1.0, delta=1.0)
 
     def test_invalid_sensitivity(self):
@@ -232,7 +232,7 @@ class TestPrivacyBudgetTracker:
 
     def test_init_invalid_delta(self):
         """Test error on invalid delta."""
-        with pytest.raises(ValueError, match="total_delta must be in \\[0, 1\"):
+        with pytest.raises(ValueError, match=r"total_delta must be in \[0, 1\)"):
             PrivacyBudgetTracker(total_epsilon=1.0, total_delta=1.0)
 
     def test_consume_budget(self):
@@ -311,8 +311,8 @@ class TestPrivacyBudgetTracker:
         tracker.consume(epsilon=0.2)
         tracker.consume(epsilon=0.3)
         
-        assert tracker.used_epsilon == 0.6
-        assert tracker.remaining()[0] == 0.4
+        assert tracker.used_epsilon == pytest.approx(0.6)
+        assert tracker.remaining()[0] == pytest.approx(0.4)
 
     def test_query_context(self):
         """Test query context manager."""

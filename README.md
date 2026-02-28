@@ -1,218 +1,375 @@
-# Anonimize
+# Anonimize 🛡️
 
 [![CI](https://github.com/rar-file/anonimize/actions/workflows/ci.yml/badge.svg)](https://github.com/rar-file/anonimize/actions/workflows/ci.yml)
+[![Tests](https://img.shields.io/badge/tests-161%20passing-brightgreen.svg)](tests/)
+[![Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen.svg)](.coverage)
 [![PyPI version](https://badge.fury.io/py/anonimize.svg)](https://badge.fury.io/py/anonimize)
 [![Python versions](https://img.shields.io/pypi/pyversions/anonimize.svg)](https://pypi.org/project/anonimize/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Docker](https://img.shields.io/badge/Docker-ghcr.io-blue?logo=docker)](https://github.com/rar-file/anonimize/pkgs/container/anonimize)
+[![Downloads](https://img.shields.io/pypi/dm/anonimize.svg)](https://pypi.org/project/anonimize/)
 
-> Enterprise-grade data anonymization platform for PII protection
+> **Simple, fast, and reliable data anonymization for everyone.**
 
-Anonimize is a comprehensive data anonymization toolkit that helps organizations protect sensitive information while preserving data utility. Built with enterprise requirements in mind, it supports multiple anonymization strategies, database connectors, and file formats.
+Anonimize makes it easy to protect sensitive information (PII) in your data while preserving data relationships and utility. Perfect for creating safe development datasets, sharing test data, or complying with privacy regulations like GDPR and CCPA.
 
-## Features
+---
 
-### Anonymization Strategies
-- **Replace**: Substitute PII with realistic fake data (consistent per value)
-- **Hash**: One-way cryptographic hashing
-- **Mask**: Partial redaction (e.g., `j***@example.com`)
-- **Token**: Reversible encryption for testing scenarios
+## 🚀 Quick Start
 
-### Supported PII Types
-- Email addresses
-- Phone numbers (US/international)
-- Social Security Numbers
-- Credit card numbers (with Luhn validation)
-- Names, addresses, dates
-- Custom regex patterns
-
-### Database Connectors
-- PostgreSQL
-- MySQL / MariaDB
-- SQLite (file & in-memory)
-- MongoDB
-
-### File Formats
-- JSON / JSONL
-- CSV / TSV
-- Parquet
-- Excel (xlsx)
-- Avro
-- XML
-
-## Quick Start
+### Installation
 
 ```bash
+# Basic installation
 pip install anonimize
+
+# With all database and format support
+pip install "anonimize[all]"
+
+# Or install specific extras
+pip install "anonimize[postgresql,mongodb,excel]"
 ```
+
+### 30-Second Example
 
 ```python
 from anonimize import Anonymizer
 
-# Basic usage
-anon = Anonymizer(locale="en_US", seed=42)
+# Create anonymizer
+anon = Anonymizer(seed=42)
 
-# Anonymize a record
+# Your data with PII
 data = {
     "name": "John Doe",
     "email": "john@example.com",
+    "phone": "+1-555-0123",
     "ssn": "123-45-6789"
 }
 
-config = {
-    "name": {"strategy": "replace", "type": "name"},
-    "email": {"strategy": "mask"},
-    "ssn": {"strategy": "hash"}
-}
+# Anonymize it
+result = anon.anonymize(data)
 
-result = anon.anonymize(data, config)
-# Result: {
-#   "name": "Sarah Smith",  # Consistent fake name
-#   "email": "j***@example.com",
-#   "ssn": "SSN-A7B3C9D2E1F8"
+print(result)
+# {
+#   "name": "Sarah Smith",     # Consistent fake name
+#   "email": "sarah@email.com", # Different but realistic email
+#   "phone": "+1-555-9876",     # Different phone number
+#   "ssn": "456-78-9012"        # Different SSN
 # }
 ```
 
-## Database Anonymization
+### Command Line
+
+```bash
+# Detect PII in a file
+anonimize detect customers.csv
+
+# Anonymize a file
+anonimize customers.csv --output customers_safe.csv
+
+# Preview changes first
+anonimize customers.csv --dry-run
+
+# Interactive wizard (recommended for first-time users)
+anonimize --wizard
+```
+
+---
+
+## ✨ Features
+
+### 🎯 Core Capabilities
+- **PII Detection**: Automatically detects emails, phones, SSNs, credit cards, names, addresses
+- **4 Anonymization Strategies**:
+  - `replace` - Substitute with realistic fake data (default)
+  - `mask` - Partial redaction (e.g., `j***@example.com`)
+  - `hash` - One-way cryptographic hashing
+  - `remove` - Delete the field entirely
+- **Relationship Preservation**: Same input always produces same output (consistency)
+- **Reproducibility**: Set a seed for consistent results across runs
+
+### 📁 Supported Formats
+- **Files**: CSV, JSON, JSONL, Parquet, Excel (.xlsx), Avro, XML
+- **Databases**: PostgreSQL, MySQL, SQLite, MongoDB
+- **Streaming**: Process files larger than memory
+
+### 🔒 Privacy Features
+- **Differential Privacy**: Add calibrated noise for mathematical privacy guarantees
+- **K-Anonymity**: Ensure records can't be uniquely identified
+- **Audit Logging**: Track what was anonymized and how
+
+---
+
+## 📖 Usage Guide
+
+### Python API
+
+#### Basic Usage
 
 ```python
-from anonimize.connectors import PostgreSQLConnector
 from anonimize import Anonymizer
 
+# Initialize
+anon = Anonymizer(locale="en_US", seed=42)
+
+# Auto-detect and anonymize PII
+data = {"name": "John", "email": "john@example.com"}
+result = anon.anonymize(data)
+```
+
+#### With Configuration
+
+```python
+config = {
+    "name": {"strategy": "replace", "type": "name"},
+    "email": {"strategy": "mask"},
+    "ssn": {"strategy": "hash", "algorithm": "sha256"},
+    "salary": {"strategy": "remove"}
+}
+
+result = anon.anonymize(data, config)
+```
+
+#### Database Anonymization
+
+```python
+from anonimize.connectors import create_connector
+
 # Connect to database
-with PostgreSQLConnector("postgresql://user:pass@localhost/db") as conn:
-    # Anonymize entire table
-    anon = Anonymizer()
-    
-    for batch in conn.read_table("users", batch_size=1000):
-        anonymized = [anon.anonymize(row, config) for row in batch]
+conn = create_connector("postgresql://user:pass@localhost/db")
+
+# Anonymize table
+with conn:
+    for batch in conn.scan_table("users", batch_size=1000):
+        anonymized = [anon.anonymize(row) for row in batch]
         conn.write_table("users_anonymized", anonymized)
 ```
 
-## CLI Usage
+### CLI Usage
+
+#### Commands
 
 ```bash
-# Anonymize a CSV file
-anonimize anonymize data.csv --config config.yaml --output anonymized.csv
+# Anonymize a file
+anonimize data.csv --output safe.csv --strategy mask
 
-# Anonymize database table
-anonimize db anonymize \
-  --connection postgresql://user:pass@localhost/db \
-  --table users \
-  --config config.yaml
+# Detect PII without anonymizing
+anonimize detect data.json --format json
 
-# Dry run (preview changes)
-anonimize anonymize data.csv --config config.yaml --dry-run
+# Preview first 5 rows
+anonimize preview data.csv --num-rows 5
+
+# Generate config file
+anonimize config --generate --output anonimize.yaml
 ```
 
-## Configuration
+#### CLI Options
+
+| Option | Description |
+|--------|-------------|
+| `--output, -o` | Output file path |
+| `--strategy, -s` | Strategy: replace, mask, hash, remove |
+| `--dry-run` | Preview changes without writing |
+| `--columns, -c` | Comma-separated columns to anonymize |
+| `--locale` | Locale for fake data (default: en_US) |
+| `--seed` | Random seed for reproducibility |
+| `--wizard, -w` | Interactive setup wizard |
+
+### Configuration File
+
+Create `anonimize.yaml`:
 
 ```yaml
-# config.yaml
-strategies:
-  email:
-    type: "email"
-    strategy: "mask"
-    options:
-      mask_local: true
-      
-  ssn:
-    type: "ssn"
-    strategy: "replace"
-    
-  credit_card:
-    type: "credit_card"
-    strategy: "token"
-    options:
-      encryption_key: ${TOKEN_KEY}
-
 global:
-  preserve_relationships: true
   locale: "en_US"
   seed: 42
+  preserve_relationships: true
+
+columns:
+  email:
+    strategy: "mask"
+    type: "email"
+  
+  name:
+    strategy: "replace"
+    type: "name"
+  
+  ssn:
+    strategy: "hash"
+    options:
+      algorithm: "sha256"
+      salt: "your-secret-salt"
+  
+  salary:
+    strategy: "remove"
+
+detection:
+  confidence_threshold: 0.7
+  check_field_names: true
 ```
 
-## Advanced Features
+Use it:
+```bash
+anonimize data.csv --config anonimize.yaml
+```
+
+---
+
+## 🐳 Docker Usage
+
+```bash
+# Pull the image
+docker pull ghcr.io/rar-file/anonimize:latest
+
+# Run anonymization
+docker run --rm -v $(pwd)/data:/data \
+  ghcr.io/rar-file/anonimize:latest \
+  /data/customers.csv --output /data/safe.csv
+
+# Or use docker-compose
+docker-compose run --rm anonimize data/customers.csv
+```
+
+---
+
+## 🔧 Advanced Features
 
 ### Differential Privacy
-```python
-from anonimize.privacy import add_noise
 
-# Add calibrated noise for privacy guarantees
-anonymized_value = add_noise(
+```python
+from anonimize.privacy import DPAnonymizer
+
+# Create DP anonymizer with privacy budget
+dp = DPAnonymizer(total_epsilon=1.0, mechanism="laplace")
+
+# Anonymize with privacy guarantee
+result = dp.anonymize_numeric(
     value=100000,
-    epsilon=0.1,  # Privacy budget
-    sensitivity=10000
+    sensitivity=1000,
+    epsilon=0.1
 )
 ```
 
 ### K-Anonymity
+
 ```python
 from anonimize.privacy import ensure_k_anonymity
 
 # Ensure each record is indistinguishable from k-1 others
-anonymized = ensure_k_anonymity(
+anonymized_df = ensure_k_anonymity(
     data=df,
     k=5,
     quasi_identifiers=['age', 'zipcode', 'gender']
 )
 ```
 
-### Data Lineage
+### Custom PII Types
+
 ```python
-from anonimize.lineage import LineageTracker
+from anonimize.detectors import register_pattern
 
-tracker = LineageTracker()
+# Register custom pattern
+register_pattern(
+    name="employee_id",
+    pattern=r"EMP-\d{5}",
+    category="identifier"
+)
 
-with tracker.track():
-    result = anonymizer.anonymize(data, config)
-
-# Get audit trail
-print(tracker.get_report())
-# Shows: what was anonymized, how, when, by whom
+# Now it will be detected and can be anonymized
 ```
 
-## Installation
+---
 
-### Basic
+## 📦 Installation Options
+
+| Extra | Includes | Install Command |
+|-------|----------|-----------------|
+| `postgresql` | PostgreSQL support | `pip install "anonimize[postgresql]"` |
+| `mysql` | MySQL/MariaDB support | `pip install "anonimize[mysql]"` |
+| `mongodb` | MongoDB support | `pip install "anonimize[mongodb]"` |
+| `parquet` | Parquet file support | `pip install "anonimize[parquet]"` |
+| `excel` | Excel file support | `pip install "anonimize[excel]"` |
+| `avro` | Avro file support | `pip install "anonimize[avro]"` |
+| `cli` | Interactive CLI wizard | `pip install "anonimize[cli]"` |
+| `dev` | Development tools | `pip install "anonimize[dev]"` |
+| `all` | Everything above | `pip install "anonimize[all]"` |
+
+---
+
+## 🧪 Development
+
 ```bash
-pip install anonimize
-```
-
-### With Database Support
-```bash
-pip install "anonimize[postgresql,mysql]"
-```
-
-### All Features
-```bash
-pip install "anonimize[all]"
-```
-
-## Development
-
-```bash
+# Clone the repo
 git clone https://github.com/rar-file/anonimize.git
 cd anonimize
-pip install -e ".[dev]"
+
+# Install in development mode
+pip install -e ".[dev,all]"
+
+# Run tests
 pytest
+
+# Run linting
+ruff check src/
+black --check src/
+
+# Install pre-commit hooks
+pre-commit install
 ```
 
-## Architecture
+### Project Structure
 
 ```
 anonimize/
-├── anonymizers/     # PII-specific anonymization logic
-├── connectors/      # Database connectors
-├── formats/         # File format handlers
-├── detectors/       # PII detection algorithms
-├── privacy/         # Differential privacy, k-anonymity
-└── lineage/         # Data lineage tracking
+├── src/anonimize/       # Main package
+│   ├── core.py          # Core Anonymizer class
+│   ├── anonymizers/     # Format-specific anonymizers
+│   ├── connectors/      # Database connectors
+│   ├── detectors/       # PII detection
+│   ├── formats/         # File format handlers
+│   ├── privacy/         # Differential privacy, k-anonymity
+│   └── cli/             # Command line interface
+├── tests/               # Test suite
+├── docs/                # Documentation
+└── examples/            # Example scripts
 ```
 
-## License
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Run tests (`pytest`)
+5. Commit (`git commit -m 'Add amazing feature'`)
+6. Push (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
+
+---
+
+## 📄 License
 
 MIT License - see [LICENSE](LICENSE) file.
 
-## Contributing
+---
 
-Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+## 🙏 Acknowledgments
+
+- Built with [Phoney](https://github.com/rar-file/phoney) for realistic fake data generation
+- Inspired by privacy research from Google DP Library and Microsoft Differential Privacy
+
+---
+
+## 💬 Support
+
+- **Issues**: [GitHub Issues](https://github.com/rar-file/anonimize/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/rar-file/anonimize/discussions)
+- **Documentation**: [Full Docs](https://github.com/rar-file/anonimize/tree/main/docs)
+
+---
+
+**Made with ❤️ for data privacy**

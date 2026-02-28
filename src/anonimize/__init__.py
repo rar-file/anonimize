@@ -3,19 +3,28 @@
 This package provides tools for anonymizing PII (Personally Identifiable Information)
 in databases and files while preserving data relationships.
 
-Quick Start:
+QUICK START - The Simple Way (3 lines):
+    >>> from anonimize import anonymize
+    >>> anonymize("customers.csv", "customers_safe.csv")
+    "customers_safe.csv"
+
+Or even simpler - just pass data:
+    >>> from anonimize import anonymize_data
+    >>> data = {"name": "John", "email": "john@example.com"}
+    >>> anonymize_data(data)
+    {"name": "Sarah Smith", "email": "j***@example.com"}
+
+ADVANCED USAGE - Full Control:
     >>> from anonimize import Anonymizer
-    >>> anon = Anonymizer()
-    >>> data = {"name": "John Doe", "email": "john@example.com"}
+    >>> anon = Anonymizer(locale="en_US", seed=42)
     >>> config = {
     ...     "name": {"strategy": "replace", "type": "name"},
     ...     "email": {"strategy": "hash", "type": "email"},
     ... }
     >>> result = anon.anonymize(data, config)
-    >>> print(result)
-    {'name': 'Jane Smith', 'email': 'a3f5c8e9...'}
 
 Modules:
+    - simple: Dead-simple API (start here!)
     - core: Main Anonymizer class
     - connectors: Database connectors (PostgreSQL, MySQL, SQLite, MongoDB)
     - formats: File format handlers (Parquet, Excel, Avro)
@@ -24,6 +33,8 @@ Modules:
     - detectors: PII detection utilities
 """
 
+# Simple API - Import these for quick usage
+from anonimize.simple import anonymize, anonymize_data, detect_pii, preview
 from anonimize.core import Anonymizer
 from anonimize.__version__ import __version__, __version_info__
 
@@ -74,6 +85,11 @@ except ImportError:
     process_large_file = None  # type: ignore
 
 __all__ = [
+    # Simple API - Start here!
+    "anonymize",
+    "anonymize_data",
+    "detect_pii",
+    "preview",
     # Core
     "Anonymizer",
     "__version__",

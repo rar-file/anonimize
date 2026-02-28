@@ -6,6 +6,8 @@ the anonymization process across different data sources.
 
 from typing import Any, Dict, List, Optional, Union
 import logging
+import random
+import hashlib
 
 # Import Phoney for fake data generation
 try:
@@ -60,12 +62,14 @@ class Anonymizer:
         
         # Initialize Phoney for fake data generation
         if Phoney:
-            self._phoney = Phoney(locale=locale)
-            if seed is not None:
-                self._phoney.seed(seed)
+            self._phoney = Phoney()
         else:
             self._phoney = None
             logger.warning("Phoney not installed. Replace strategy will not work.")
+        
+        # Set random seed if provided (for consistent fake data)
+        if seed is not None:
+            random.seed(seed)
         
         # Initialize detectors
         self._regex_detector = RegexDetector()
@@ -90,15 +94,14 @@ class Anonymizer:
         
         if "locale" in config:
             self.locale = config["locale"]
-            if self._phoney:
-                self._phoney = Phoney(locale=self.locale)
+            # Note: Phoney doesn't support locale, but we store it for other uses
         
         if "preserve_relationships" in config:
             self.preserve_relationships = config["preserve_relationships"]
         
-        if "seed" in config and self._phoney:
+        if "seed" in config:
             self.seed = config["seed"]
-            self._phoney.seed(self.seed)
+            random.seed(self.seed)
         
         logger.debug(f"Configuration updated: {config}")
         return self
@@ -196,7 +199,7 @@ class Anonymizer:
             pii_type = settings.get("type", "string")
             original_value = result[field]
             
-            if original_value is None:
+            if original_value is None or original_value == "":
                 continue
             
             if strategy == "replace":
@@ -232,24 +235,39 @@ class Anonymizer:
             return self._value_cache[cache_key]
         
         # Generate fake value based on type
+        # Phoney methods: email, phone, first_name, last_name, full_name, uuid, etc.
         generators = {
-            "name": self._phoney.name,
+            "name": self._phoney.full_name,
+            "full_name": self._phoney.full_name,
             "first_name": self._phoney.first_name,
             "last_name": self._phoney.last_name,
             "email": self._phoney.email,
-            "phone": self._phoney.phone_number,
-            "ssn": self._phoney.ssn,
-            "address": self._phoney.street_address,
-            "city": self._phoney.city,
-            "country": self._phoney.country,
-            "company": self._phoney.company,
-            "credit_card": self._phoney.credit_card_number,
-            "ip_address": self._phoney.ipv4,
-            "uuid": self._phoney.uuid4,
+            "phone": self._phoney.phone,
+            "uuid": self._phoney.uuid,
+            "ipv4": self._phoney.ipv4,
+            "ipv6": self._phoney.ipv6,
+            "hostname": self._phoney.hostname,
+            "domain": self._phoney.domain,
+            "url": self._phoney.url,
+            "username": self._phoney.username,
+            "password": self._phoney.password,
+            "user_agent": self._phoney.user_agent,
+            "job_title": self._phoney.job_title,
+            "mac": self._phoney.mac,
+            "vin": self._phoney.vin,
+            "imei": self._phoney.imei,
+            "ean13": self._phoney.ean13,
+            "isbn13": self._phoney.isbn13,
+            "upca": self._phoney.upca,
+            "tld": self._phoney.tld,
         }
         
-        generator = generators.get(pii_type, lambda: str(value))
-        fake_value = generator()
+        generator = generators.get(pii_type)
+        if generator:
+            fake_value = generator()
+        else:
+            # For unknown types, generate a random string
+            fake_value = f"anon_{random.randint(1000, 9999)}"
         
         # Cache the result
         if self.preserve_relationships:
@@ -267,8 +285,6 @@ class Anonymizer:
         Returns:
             Hashed value.
         """
-        import hashlib
-        
         salt = settings.get("salt", "")
         algorithm = settings.get("algorithm", "sha256")
         

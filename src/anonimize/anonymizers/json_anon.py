@@ -179,9 +179,11 @@ class JSONAnonymizer(BaseAnonymizer):
         """
         for pattern in config.keys():
             if "*" in pattern:
+                # Convert [] to .* for matching since config uses * for array indices
+                normalized_path = path.replace("[]", ".*")
                 # Simple wildcard matching
                 import fnmatch
-                if fnmatch.fnmatch(path, pattern):
+                if fnmatch.fnmatch(normalized_path, pattern):
                     return True
         return False
 
@@ -202,8 +204,11 @@ class JSONAnonymizer(BaseAnonymizer):
         import fnmatch
         
         for pattern, settings in config.items():
-            if "*" in pattern and fnmatch.fnmatch(path, pattern):
-                return settings
+            if "*" in pattern:
+                # Convert [] to .* for matching since config uses * for array indices
+                normalized_path = path.replace("[]", ".*")
+                if fnmatch.fnmatch(normalized_path, pattern):
+                    return settings
         
         return {}
 

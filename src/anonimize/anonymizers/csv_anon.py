@@ -58,6 +58,7 @@ class CSVAnonymizer(BaseAnonymizer):
         output_path: Union[str, Path],
         config: Optional[Dict[str, Dict[str, Any]]] = None,
         column_mapping: Optional[Dict[str, str]] = None,
+        show_progress: bool = False,
         **kwargs
     ) -> Dict[str, Any]:
         """Anonymize a CSV file.
@@ -67,6 +68,7 @@ class CSVAnonymizer(BaseAnonymizer):
             output_path: Path for the anonymized output file.
             config: Column anonymization configuration.
             column_mapping: Map CSV columns to different field names in config.
+            show_progress: Show progress bar for large files (requires tqdm).
             **kwargs: Additional arguments passed to csv.reader/writer.
         
         Returns:
@@ -113,9 +115,34 @@ class CSVAnonymizer(BaseAnonymizer):
             reader = csv.reader(f, dialect=dialect, **kwargs)
             headers = next(reader)
         
+        # Count total rows for progress bar
+        total_rows = 0
+        if show_progress:
+            try:
+                with open(input_path, "r", encoding=self.encoding, newline="") as f:
+                    total_rows = sum(1 for _ in f) - 1  # Subtract header
+            except Exception:
+                show_progress = False  # Fall back to no progress on error
+        
         # Process the file
         records_processed = 0
         fields_anonymized = 0
+        
+        # Setup progress bar if requested
+        progress_bar = None
+        if show_progress:
+            try:
+                from tqdm import tqdm
+                progress_bar = tqdm(
+                    total=total_rows,
+                    desc="Anonymizing",
+                    unit="rows",
+                    ncols=80,
+                    bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}]"
+                )
+            except ImportError:
+                logger.warning("tqdm not installed, progress bar disabled. Install with: pip install tqdm")
+                show_progress = False
         
         with open(input_path, "r", encoding=self.encoding, newline="") as infile, \
              open(output_path, "w", encoding=self.encoding, newline="") as outfile:
@@ -155,8 +182,16 @@ class CSVAnonymizer(BaseAnonymizer):
                 
                 records_processed += 1
                 
+                # Update progress bar
+                if progress_bar:
+                    progress_bar.update(1)
+                
                 if records_processed % self.chunk_size == 0:
                     logger.debug(f"Processed {records_processed} records...")
+        
+        # Close progress bar
+        if progress_bar:
+            progress_bar.close()
         
         self._update_stats(records=records_processed, fields=fields_anonymized)
         
